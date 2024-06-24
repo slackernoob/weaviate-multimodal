@@ -6,7 +6,7 @@ assert client.is_live()
 collection = client.collections.get("DemoCollection")
 
 response = collection.query.near_text(
-    query="inflation rates of Singapore",  # The model provider integration will automatically vectorize the query
+    query="angry dog",  # The model provider integration will automatically vectorize the query
     limit=1
 )
 

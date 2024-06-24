@@ -26,20 +26,23 @@ client = weaviate.connect_to_local()  # Connect with default parameters
 assert client.is_live()
 
 collection = client.collections.get("DemoCollection")
-source_objects = [{"title": "comparison inflation rates", 
-                   "description": "comparison of inflation rates of Singapore and the World from 2000 to 2022",
-                   "poster_path": "./source_objects/pg5_comparison_inflation_rates.png"},
-                   {"title": "income growth",
-                    "description": "real annualised change in average monthly household income from work per member (2013 to 2023)",
-                    "poster_path": "./source_objects/pg35_income_growth_by_quintile.png"}
-                    ]
+# source_objects = [{"title": "comparison inflation rates", 
+#                    "description": "comparison of inflation rates of Singapore and the World from 2000 to 2022",
+#                    "poster_path": "./source_objects/pg5_comparison_inflation_rates.png"},
+#                    {"title": "income growth",
+#                     "description": "real annualised change in average monthly household income from work per member (2013 to 2023)",
+#                     "poster_path": "./source_objects/pg35_income_growth_by_quintile.png"}
+#                     ]
+
+source_objects = os.listdir("./simple_images/dog/")
 
 with collection.batch.dynamic() as batch:
     for src_obj in source_objects:
-        poster_b64 = url_to_base64(src_obj["poster_path"])
+        path = "./simple_images/dog/" + src_obj
+        poster_b64 = url_to_base64(path)
         weaviate_obj = {
-            "title": src_obj["title"],
-            "description": src_obj["description"],
+            "title": src_obj,
+            # "description": src_obj["description"],
             "poster": poster_b64  # Add the image in base64 encoding
         }
 
@@ -48,5 +51,5 @@ with collection.batch.dynamic() as batch:
             properties=weaviate_obj,
             # vector=vector  # Optionally provide a pre-obtained vector
         )
-
+print("data imported")
 client.close()  # Close the connection & release resources
