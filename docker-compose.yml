@@ -20,3 +20,4 @@ services:
       ENABLE_CUDA: 0 # set to 1 to enable
   # Set additional inference containers here if desired
 ...
+
