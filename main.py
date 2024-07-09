@@ -4,6 +4,7 @@ from typing import List, Optional, Union
 import json
 import logging
 import uvicorn
+import requests
 import weaviate
 import weaviate.classes as wvc
 
@@ -24,7 +25,28 @@ app = FastAPI()
 
 # logger = logging.basicConfig(level=logging.DEBUG, filename='app.log', filemode='a', format='%(asctime)s - %(levelname)s - %(message)s')
 
-
+response = {
+    'id': 'cmpl-beadb6213adb46738fae279276bbf564',
+    'object': 'chat.completion',
+    'created': 1720513536,
+    'model': 'llava',
+    'choices': [{
+        'index': 0,
+        'message': {
+            'role': 'assistant',
+            'content': 'This image shows a pie chart with categories for sales. The chart is labeled "Sales chart" and includes four categories: Toys, Furniture, Home Decor, and Electronics. Each category has a different color and a percentage of the total sales assigned to it. The percentages are shown as follows: Toys with 28%, Furniture with 14%, Home Decor with 34%, and Electronics with 15%. The colors of the categories are blue, orange, and yellow, and the chart is presented against a white background. ',
+            'tool_calls': []
+        },
+        'logprobs': None,
+        'finish_reason': 'stop',
+        'stop_reason': None
+    }],
+    'usage': {
+        'prompt_tokens': 1196,
+        'total_tokens': 1319,
+        'completion_tokens': 123
+    }
+}
 
 @app.get("/")
 def read_root():
@@ -45,11 +67,57 @@ def insert_object(request: InsertRequest):
     collection = client.collections.get(collection_name)
     objects = request.objects
 
+    response = {
+        'id': 'cmpl-beadb6213adb46738fae279276bbf564',
+        'object': 'chat.completion',
+        'created': 1720513536,
+        'model': 'llava',
+        'choices': [{
+            'index': 0,
+            'message': {
+                'role': 'assistant',
+                'content': 'This image shows a pie chart with categories for sales. The chart is labeled "Sales chart" and includes four categories: Toys, Furniture, Home Decor, and Electronics. Each category has a different color and a percentage of the total sales assigned to it. The percentages are shown as follows: Toys with 28%, Furniture with 14%, Home Decor with 34%, and Electronics with 15%. The colors of the categories are blue, orange, and yellow, and the chart is presented against a white background. ',
+                'tool_calls': []
+            },
+            'logprobs': None,
+            'finish_reason': 'stop',
+            'stop_reason': None
+        }],
+        'usage': {
+            'prompt_tokens': 1196,
+            'total_tokens': 1319,
+            'completion_tokens': 123
+        }
+    }    
+
+    # resp = requests.post(
+    #     "http://10.255.252.128:8001/v1/chat/completions",
+    #     json={
+    #         "model": "llava",
+    #         "messages": [
+    #             {
+    #                 "role": "user",
+    #                 "content": [
+    #                     {"type": "text", "text": "What's in this image?"},
+    #                     {
+    #                         "type": "image_url",
+    #                         "image_url": {
+    #                             # "url": "https://www.spotfire.com/content/dam/spotfire/images/graphics/inforgraphics/pie1.png"
+    #                             "url": "simple_images/sample_charts/chart1.png"
+    #                         },
+    #                     },
+    #                 ],
+    #             }
+    #         ],
+    #     },
+    # )
+    
     with collection.batch.dynamic() as batch:
         for item in objects:
             weaviate_obj = {}
-            if item.text is not None:
-                weaviate_obj["text"] = item.text
+
+            weaviate_obj["text"] = response['choices'][0]['message']['content']
+
             if item.name is not None:
                 weaviate_obj["name"] = item.name
             if item.image is not None:
@@ -60,15 +128,35 @@ def insert_object(request: InsertRequest):
     return {"status": "success"}
 
 
+
+'''
+{'id': 'cmpl-beadb6213adb46738fae279276bbf564', 
+'object': 'chat.completion', 
+'created': 1720513536, 
+'model': 'llava', 
+'choices': [{'index': 0, 
+            'message': {'role': 'assistant', 
+                        'content': 'This image shows a pie chart with categories for sales. The chart is labeled "Sales chart" and includes four categories: Toys, Furniture, Home Decor, and Electronics. Each category has a different color and a percentage of the total sales assigned to it. The percentages are shown as follows: Toys with 28%, Furniture with 14%, Home Decor with 34%, and Electronics with 15%. The colors of the categories are blue, orange, and yellow, and the chart is presented against a white background. ', 
+                        'tool_calls': []
+                        }, 
+            'logprobs': None, 
+            'finish_reason': 'stop', 
+            'stop_reason': None
+            }], 
+'usage': {'prompt_tokens': 1196, 
+        'total_tokens': 1319, 
+        'completion_tokens': 123}}
+'''
 # doesnt really work, not sure why
-@app.post("/near_text_query")
-def near_text_query(request: nearTextQueryRequest):
+# @app.post("/near_text_query")
+# def near_text_query(request: nearTextQueryRequest):
     
     
-    client = weaviate.connect_to_local()
-    collection_name = request.collection_name
-    collection = client.collections.get(collection_name)
-    print(request.query) with collection.batch.dynamic() as batch:
+#     client = weaviate.connect_to_local()
+#     collection_name = request.collection_name
+#     collection = client.collections.get(collection_name)
+#     print(request.query) 
+    # with collection.batch.dynamic() as batch:
 #     for x in range(len(source)):
 #     # for src_obj in source:
 #         src_obj = source[x]
@@ -103,11 +191,11 @@ def near_text_query(request: nearTextQueryRequest):
 #         batch.add_object(
 #             properties=weaviate_obj,
 #         )
-        print(" ------------------- ")
+        # print(" ------------------- ")
     # print(response)
     # for obj in response.objects:
     #     print(obj.properties)
     #     print(obj.metadata)
-    client.close()
-    return response
+    # client.close()
+    # return response
     # return {"status": "success"}
