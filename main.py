@@ -1,6 +1,6 @@
-from fastapi import FastAPI
+from typing import List, Optional
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from typing import List, Optional, Union
 import requests
 import weaviate
 import weaviate.classes as wvc
@@ -14,78 +14,63 @@ class InsertRequest(BaseModel):
     collection_name: str
     objects: List[Item]
 
-class nearTextQueryRequest(BaseModel):
+class nearbySearchRequest(BaseModel):
     collection_name: str
     query: str
     image: Optional[str] = None
 
+class collectionRequest(BaseModel):
+    collection_name: str
+
 app = FastAPI()
 
-response = {
-    'id': 'cmpl-beadb6213adb46738fae279276bbf564',
-    'object': 'chat.completion',
-    'created': 1720513536,
-    'model': 'llava',
-    'choices': [{
-        'index': 0,
-        'message': {
-            'role': 'assistant',
-            'content': 'This image shows a pie chart with categories for sales. The chart is labeled "Sales chart" and includes four categories: Toys, Furniture, Home Decor, and Electronics. Each category has a different color and a percentage of the total sales assigned to it. The percentages are shown as follows: Toys with 28%, Furniture with 14%, Home Decor with 34%, and Electronics with 15%. The colors of the categories are blue, orange, and yellow, and the chart is presented against a white background. ',
-            'tool_calls': []
-        },
-        'logprobs': None,
-        'finish_reason': 'stop',
-        'stop_reason': None
-    }],
-    'usage': {
-        'prompt_tokens': 1196,
-        'total_tokens': 1319,
-        'completion_tokens': 123
-    }
-}
+@app.post("/create_collection")
+def create_collection(request: collectionRequest):
+    client = weaviate.connect_to_local()
+    collection_name = request.collection_name
 
-@app.get("/")
-def read_root():
-    return {"test"}
+    if client.collections.exists(collection_name):
+        client.close()
+        raise HTTPException(status_code=400, detail=f"Collection '{collection_name}' already exists.")
+    
+    client.collections.create(
+        name=collection_name,
+        properties=[
+            wvc.config.Property(name="name", data_type=wvc.config.DataType.TEXT),
+            wvc.config.Property(name="image", data_type=wvc.config.DataType.BLOB),
+            wvc.config.Property(name="text", data_type=wvc.config.DataType.TEXT),
+        ],
+        # Define & configure the vectorizer module
+        vectorizer_config=wvc.config.Configure.Vectorizer.multi2vec_clip(
+            image_fields=[wvc.config.Multi2VecField(name="image", weight=0)],    # 70% of the vector is from the image
+            text_fields=[wvc.config.Multi2VecField(name="name", weight=0),       # 10% of the vector is from the name
+                        wvc.config.Multi2VecField(name="text", weight=1.0)],      # 20% of the vector is from the text
+        ),
+    )
+    client.close()
+    return {"status": "success"}
 
+@app.post("/delete_collection")
+def delete_collection(request: collectionRequest):
+    client = weaviate.connect_to_local()
+    collection_name = request.collection_name
 
-@app.get("/items/{item_id}")
-def read_item(item_id: int, q: Union[str, None] = None):
-    return {"item_id": item_id, "q": q}
+    if client.collections.exists(collection_name):
+        client.collections.delete(collection_name)
+        client.close()
+        return {"status": "success"}
+    client.close()
+    raise HTTPException(status_code=400, detail=f"Collection '{collection_name}' does not exist.")
+    
+    
 
-
-
-@app.post("/insert_object")
-def insert_object(request: InsertRequest):
+@app.post("/insert_objects")
+def insert_objects(request: InsertRequest):
     client = weaviate.connect_to_local()
     # client = weaviate.Client("http://localhost:8080")  # Connect to Weaviate
     collection_name = request.collection_name
     collection = client.collections.get(collection_name)
     objects = request.objects
-
-    
-    # response = {
-    #     'id': 'cmpl-beadb6213adb46738fae279276bbf564',
-    #     'object': 'chat.completion',
-    #     'created': 1720513536,
-    #     'model': 'llava',
-    #     'choices': [{
-    #         'index': 0,
-    #         'message': {
-    #             'role': 'assistant',
-    #             'content': 'This image shows a pie chart with categories for sales. The chart is labeled "Sales chart" and includes four categories: Toys, Furniture, Home Decor, and Electronics. Each category has a different color and a percentage of the total sales assigned to it. The percentages are shown as follows: Toys with 28%, Furniture with 14%, Home Decor with 34%, and Electronics with 15%. The colors of the categories are blue, orange, and yellow, and the chart is presented against a white background. ',
-    #             'tool_calls': []
-    #         },
-    #         'logprobs': None,
-    #         'finish_reason': 'stop',
-    #         'stop_reason': None
-    #     }],
-    #     'usage': {
-    #         'prompt_tokens': 1196,
-    #         'total_tokens': 1319,
-    #         'completion_tokens': 123
-    #     }
-    # }    
 
     with collection.batch.dynamic() as batch:
         for item in objects:
@@ -112,6 +97,7 @@ def insert_object(request: InsertRequest):
                         }
                     ],
                 },
+                timeout=None,
             )
             # print(vlm_response.json())
             captions = vlm_response.json()['choices'][0]['message']['content']
@@ -128,13 +114,22 @@ def insert_object(request: InsertRequest):
     return {"status": "success"}
 
 
-
-
-@app.post("/near_text_query")
-def near_text_query(request: nearTextQueryRequest):
+@app.post("/nearby_search")
+def nearby_search(request: nearbySearchRequest):
     client = weaviate.connect_to_local()
     collection_name = request.collection_name
+    collection = client.collections.get(collection_name)
     query = request.query
+
+    # Check if collection is empty or not
+    count = 0
+    for item in collection.iterator():
+        count += 1
+        break
+    if count == 0:
+        print("count is zero")
+        raise HTTPException(status_code=400, detail=f"Collection '{collection_name}' is empty.")
+
 
     base64_image = request.image
     # Captions from the VLM endpoint
@@ -159,10 +154,9 @@ def near_text_query(request: nearTextQueryRequest):
                 }
             ],
         },
+        timeout=None,
     )
     captions = vlm_response.json()['choices'][0]['message']['content']
-    collection = client.collections.get(collection_name)
-    
     
     
     response = collection.query.near_text(

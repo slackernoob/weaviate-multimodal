@@ -26,7 +26,7 @@ base64_string = to_base64(directory)
 
 
 # URL of your FastAPI endpoint
-url = "http://localhost:8000/near_text_query"
+url = "http://localhost:8000/nearby_search"
  
 payload = {
     "collection_name" : "DemoCollection",
@@ -37,24 +37,31 @@ payload = {
 try:
     # Convert the payload to JSON
     headers = {'Content-Type': 'application/json'}
-    response = requests.post(url, headers=headers, data=json.dumps(payload))
+    response = requests.post(url,
+                             headers=headers,
+                             data=json.dumps(payload),
+                             timeout=None)
 
-    print(response.status_code)
+    # print(response.status_code)
+    if response.status_code == 400:
+        print(response.json()['detail'])
+
     response_data = response.json()
-
-    for result in response_data:
-        print("-----")
-        print(result['text'])
-        print("--")
+    
+    # for result in response_data:
+    #     print("-----")
+    #     print(result['text'])
+    #     print("--")
         # print(result['name']) # base64 image
         
-        print("--")
+        # print("--")
         # print(result['image'])
-        
-    encoded_image = response_data[0]['name']
-    image_data = base64.b64decode(encoded_image)
-    image = Image.open(BytesIO(image_data))
-    image.show()
+    
+    # if len(response_data)
+    # encoded_image = response_data[0]['name']
+    # image_data = base64.b64decode(encoded_image)
+    # image = Image.open(BytesIO(image_data))
+    # image.show()
     
 except Exception as e:
     print(f"Error sending request: {e}")

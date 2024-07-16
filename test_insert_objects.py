@@ -35,7 +35,7 @@ payload["objects"] = objs
 # print(payload["objects"][0]['name'])
 
 # URL of your FastAPI endpoint
-url = "http://localhost:8000/insert_object"
+url = "http://localhost:8000/insert_objects"
 
 try:
     # Convert the payload to JSON
