@@ -18,10 +18,15 @@ def to_base64(url_or_path):
     
     return base64.b64encode(content).decode("utf-8")
 
-directory = "./simple_images/cat/"
+# Change directory to image directory
+directory = "./simple_images/cat/" 
+
+# Change collection name to actual collection name
+collection_name = "DemoCollection"
+
 source = os.listdir(directory)
 payload = {
-    "collection_name": "DemoCollection",
+    "collection_name": collection_name,
 }
 
 objs = []
@@ -34,7 +39,7 @@ for src_obj in source:
 payload["objects"] = objs
 # print(payload["objects"][0]['name'])
 
-# URL of your FastAPI endpoint
+# URL of FastAPI endpoint
 url = "http://localhost:8000/insert_objects"
 
 try:

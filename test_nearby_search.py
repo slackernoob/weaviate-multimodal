@@ -21,15 +21,17 @@ def to_base64(url_or_path):
     return base64.b64encode(content).decode("utf-8")
 
 
+# Modify according to test query
 directory = "./simple_images/orange-cat.jpg"
 base64_string = to_base64(directory)
+collection_name = "DemoCollection"
+query = ""
 
-
-# URL of your FastAPI endpoint
+# URL of FastAPI endpoint
 url = "http://localhost:8000/nearby_search"
  
 payload = {
-    "collection_name" : "DemoCollection",
+    "collection_name" : collection_name,
     "query": "",
     "image": base64_string,
     }
@@ -57,7 +59,7 @@ try:
         # print("--")
         # print(result['image'])
     
-    # if len(response_data)
+    # to display the image
     # encoded_image = response_data[0]['name']
     # image_data = base64.b64decode(encoded_image)
     # image = Image.open(BytesIO(image_data))

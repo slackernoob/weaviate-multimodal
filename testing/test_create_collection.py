@@ -5,7 +5,7 @@ import requests
 url = "http://localhost:8000/create_collection"
 
 payload = {
-    "collection_name": "DemoCollection"
+    "collection_name": "DemoCollection1"
 }
 
 
@@ -16,9 +16,6 @@ try:
                              headers=headers,
                              data=json.dumps(payload),
                              timeout=10)
-
-    # Print the response from the server
-    # print(response.status_code)
 
     if response.status_code == 200:
         print(response.json()['status'])
