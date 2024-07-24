@@ -97,30 +97,31 @@ def insert_objects(request: InsertRequest):
             weaviate_obj = {}
             base64_image = item.image
             # Get image captions from the VLM endpoint
-            # vlm_response = requests.post(
-            #     VLM_API_BASE + "/chat/completions",
-            #     json={
-            #         "model": "llava",
-            #         "messages": [
-            #             {
-            #                 "role": "user",
-            #                 "content": [
-            #                     {"type": "text", "text": "What's in this image?"},
-            #                     {
-            #                         "type": "image_url",
-            #                         "image_url": {
-            #                             "url": f"data:image/jpeg;base64,{base64_image}"
-            #                         },
-            #                     },
-            #                 ],
-            #             }
-            #         ],
-            #     },
-            #     timeout=None,
-            # )
+            vlm_response = requests.post(
+                VLM_API_BASE + "/chat/completions",
+                json={
+                    "model": "llava",
+                    "messages": [
+                        {
+                            "role": "user",
+                            "content": [
+                                # {"type": "text", "text": "List out the keywords in this image"},
+                                {"type": "text", "text": "List out the top 10 keywords in this image, without duplicates, in this format: keyword1 keyword2 keyword3"},
+                                {
+                                    "type": "image_url",
+                                    "image_url": {
+                                        "url": f"data:image/jpeg;base64,{base64_image}"
+                                    },
+                                },
+                            ],
+                        }
+                    ],
+                },
+                timeout=None,
+            )
             
-            captions = "it is a beautiful Friday afternoon"
-            # captions = vlm_response.json()['choices'][0]['message']['content']
+            # captions = "it is a beautiful Friday afternoon"
+            captions = vlm_response.json()['choices'][0]['message']['content']
 
             if item.text is not None:
                 weaviate_obj["text"] = item.text + " " + captions 
@@ -156,30 +157,37 @@ def nearby_search(request: nearbySearchRequest):
 
 
     base64_image = request.image
+    print(len(base64_image))
     # Get image captions from the VLM endpoint
-    # vlm_response = requests.post(
-    #     VLM_API_BASE + "/chat/completions",
-    #     json={
-    #         "model": "llava",
-    #         "messages": [
-    #             {
-    #                 "role": "user",
-    #                 "content": [
-    #                     {"type": "text", "text": "What's in this image?"},
-    #                     {
-    #                         "type": "image_url",
-    #                         "image_url": {
-    #                             "url": f"data:image/jpeg;base64,{base64_image}",
-    #                         },
-    #                     },
-    #                 ],
-    #             }
-    #         ],
-    #     },
-    #     timeout=None,
-    # )
-    # captions = vlm_response.json()['choices'][0]['message']['content']
-    captions = "it is a beautiful Friday afternoon"
+    if base64_image != None and len(base64_image) > 0:
+        vlm_response = requests.post(
+            VLM_API_BASE + "/chat/completions",
+            json={
+                "model": "llava",
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": "List out the top 10 keywords in this image, without duplicates, in this format: keyword1 keyword2 keyword3"},
+                            # {"type": "text", "text": "What's in this image? Include all the text headers found in the image in the response"},
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": f"data:image/jpeg;base64,{base64_image}",
+                                },
+                            },
+                        ],
+                    }
+                ],
+            },
+            timeout=None,
+        )
+        print("test")
+        print(vlm_response.json())
+        captions = vlm_response.json()['choices'][0]['message']['content']
+    else:
+        captions = ""
+    # captions = "it is a beautiful Friday afternoon"
     
     response = collection.query.near_text(
         query=query + captions,
