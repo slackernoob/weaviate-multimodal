@@ -19,10 +19,10 @@ def to_base64(url_or_path):
     return base64.b64encode(content).decode("utf-8")
 
 # Change directory to image directory
-directory = "./simple_images/cat/" 
+directory = "./data/iras/"
 
 # Change collection name to actual collection name
-collection_name = "DemoCollection"
+collection_name = "iras"
 
 source = os.listdir(directory)
 payload = {

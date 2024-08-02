@@ -24,16 +24,16 @@ def to_base64(url_or_path):
 # Modify according to test query
 directory = "./simple_images/orange-cat.jpg"
 base64_string = to_base64(directory)
-collection_name = "DemoCollection"
-query = ""
+collection_name = "DemoCollection1"
+query = "Green Action for Communities Movement"
 
 # URL of FastAPI endpoint
 url = "http://localhost:8000/nearby_search"
  
 payload = {
     "collection_name" : collection_name,
-    "query": "",
-    "image": base64_string,
+    "query": query,
+    # "image": ,#base64_string,
     }
 
 try:
@@ -49,7 +49,15 @@ try:
         print(response.json()['detail'])
 
     response_data = response.json()
-    
+    print(response_data[0]['name'])
+    # print(response_data[0]['b64image'])
+    print(response_data[0]['text'])
+    print(response_data[1]['name'])
+    # print(response_data[1]['b64image'])
+    print(response_data[1]['text'])
+    print(response_data[2]['name'])
+    # print(response_data[2]['b64image'])
+    print(response_data[2]['text'])
     # for result in response_data:
     #     print("-----")
     #     print(result['text'])
@@ -60,10 +68,10 @@ try:
         # print(result['image'])
     
     # to display the image
-    # encoded_image = response_data[0]['name']
-    # image_data = base64.b64decode(encoded_image)
-    # image = Image.open(BytesIO(image_data))
-    # image.show()
+    encoded_image = response_data[0]['b64image']
+    image_data = base64.b64decode(encoded_image)
+    image = Image.open(BytesIO(image_data))
+    image.show()
     
 except Exception as e:
     print(f"Error sending request: {e}")

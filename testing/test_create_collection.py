@@ -5,7 +5,7 @@ import requests
 url = "http://localhost:8000/create_collection"
 
 payload = {
-    "collection_name": "DemoCollection1"
+    "collection_name": "iras"
 }
 
 

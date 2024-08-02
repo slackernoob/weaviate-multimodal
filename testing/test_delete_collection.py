@@ -5,7 +5,7 @@ import requests
 url = "http://localhost:8000/delete_collection"
 
 payload = {
-    "collection_name": "testcollection"
+    "collection_name": "iras"
 }
 
 

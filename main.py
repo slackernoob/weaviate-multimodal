@@ -191,7 +191,7 @@ def nearby_search(request: nearbySearchRequest):
     
     response = collection.query.near_text(
         query=query + captions,
-        distance=0.6,
+        distance=0.2,
         return_metadata=wvc.query.MetadataQuery(distance=True),
         limit=3
     )
